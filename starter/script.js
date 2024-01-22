@@ -1,74 +1,65 @@
-// Select the timeBlocksContainer element
-const timeBlocksContainer = $("#timeBlocksContainer");
 
-// Get the current hour using dayjs library
-const currentHour = dayjs().hour();
-
-// Create a new div element for the time block
-const timeBlock = $("<div>").addClass("time-block");
-
-// Append the current hour to the time block
-timeBlock.append(currentHour);
-
-// Add a class to the current hour element
-timeBlock.find(":first-child").addClass("hour");
-
-// Append the time block to the timeBlocksContainer
-timeBlocksContainer.append(timeBlock);
-
-$(document).ready(function () {
-  // Get the current date and time
-  let currentDay = $("#currentDay");
-  var today = dayjs();
-  currentDay.text(today.format("dddd, MMMM DD"));
-
-  // Create time blocks for each hour of the day
-  for (let hour = 9; hour <= 17; hour++) {
-    // Select the timeBlocksContainer element
-    const timeBlocksContainer = $("#timeBlocksContainer");
-
-    // Get the current hour using dayjs library
-    const currentHour = dayjs().hour();
-
-    // Create a new div element for the time block
-    const timeBlock = $("<div>").addClass("time-block");
-
-    // Append the current hour to the time block
-    timeBlock.append(currentHour);
-
-    // Add a class to the current hour element
-    timeBlock.find(":first-child").addClass("hour");
-
-    // Append the time block to the timeBlocksContainer
-    timeBlocksContainer.append(timeBlock);
-  }
-
-  // Find all time blocks and set their classes based on their hour
-  $(".time-block").each(function () {
-    const blockHour = parseInt($(this).find(".hour").text());
-    if (blockHour < currentHour) {
-      $(this).addClass("past");
-    } else if (blockHour === currentHour) {
-      $(this).addClass("present");
-    } else {
-      $(this).addClass("future");
+$(document).ready(function() {
+  const localeSettings = {};
+  dayjs.locale(localeSettings);
+  // Wait until the DOM is fully loaded before executing the code inside the function.
+  $(function () {
+    // Get the current hour of the day using the dayjs library.
+    const currentHour = dayjs().format('H');
+  // The function below changes the color of each time block based on whether it's in the "past, present, or future" relative to the current hour.
+    function hourlyColor() {
+      $('.time-block').each(function() {
+        const blockHour = parseInt(this.id);
+        $(this).toggleClass('past', blockHour < currentHour);
+        $(this).toggleClass('present', blockHour === currentHour);
+        $(this).toggleClass('future', blockHour > currentHour);
+      });
     }
+  // The  function below will save the user's input in a textarea to localStorage - only when the corresponding save button has been clicked.
+    function textEntry() {
+      $('.saveBtn').on('click', function() {
+        const key = $(this).parent().attr('id');
+        const value = $(this).siblings('.description').val();
+        localStorage.setItem(key, value);
+      });
+    }
+   // The function below will refresh the color of each time block based on whether it's in the past(grey), present(red), or future(green) relative to the current time. 
+    function refreshColor() {
+      $('.time-block').each(function() {
+        const blockHour = parseInt(this.id);
+        if (blockHour == currentHour) {
+          $(this).removeClass('past future').addClass('present');
+        } else if (blockHour < currentHour) {
+          $(this).removeClass('future present').addClass('past');
+        } else {
+          $(this).removeClass('past present').addClass('future');
+        }
+      });
+    }
+    // This will get the user input from the localStorage and set textarea values for each time block.
+    $('.time-block').each(function() {
+      const key = $(this).attr('id');
+      const value = localStorage.getItem(key);
+      $(this).children('.description').val(value);
+    });
+  
+    // Please note: this is my favorite part of the module - I absolutely love the display of current date and time especially 
+    // since the the time refreshed every second - you can find this among the header of the page!
+    function updateTime() {
+      const dateElement = $('#date');
+      const timeElement = $('#time');
+      const currentDate = dayjs().format('dddd, MMMM D, YYYY');
+      const currentTime = dayjs().format('hh:mm:ss A');
+      dateElement.text(currentDate);
+      timeElement.text(currentTime);
+    }
+    // Call the three main functions to set up the page.
+    hourlyColor();
+    textEntry();                
+    refreshColor();
+    // This will update the time once per second for the current time once per second using setInterval() 
+    // giving my beautiful display header a live time hours, minutes and seconds counter
+    setInterval(updateTime, 1000);
   });
 
-  // Add event listeners to the save button
-  $(".saveBtn").on("click", function () {
-    // Get the text content of the textarea
-    const text = $(this).siblings(".description").val();
-    // Get the hour of the time block
-    const time = $(this).parent().attr("id");
-    // Save the text content to local storage
-    localStorage.setItem(time, text);
-  });
-
-  // Get the text content from local storage and set it to the textarea
-  $(".time-block").each(function () {
-    const time = $(this).attr("id");
-    const text = localStorage.getItem(time);
-    $(this).find(".description").val(text);
-  });
 });
